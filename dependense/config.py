@@ -23,7 +23,7 @@ def isBadWordAddDB(id:int)->int:
         
         return int(updating_user)
     else:
-        new_user = Users(chatid=id,isBadWord=1,isBlock=False,)
+        new_user = Users(chatid=id,isBadWord=1,isBlock=False,numberRequestsUnblock=0)
         
         db.add(new_user)
         db.commit()
@@ -42,7 +42,7 @@ def isCheckBadWordDB(id:int):
         else:
             return 0
     else:
-        new_user = Users(chatid=id,isBadWord=0,isBlock=False,)
+        new_user = Users(chatid=id,isBadWord=0,isBlock=False,numberRequestsUnblock=0)
         
         db.add(new_user)
         db.commit()
@@ -160,7 +160,20 @@ def get_All_user_Block():
         print(f'Error get_All_user_Block: {e}')
         return GetAllUser(all_user=[])
         
-        
+ 
+
+def isRequestsblock(chatId:int)->bool:       
+    db = next(get_db())
+    
+    result = db.query(Users.numberRequestsUnblock).filter(Users.chatid==chatId).scalar()
+    
+    if result==0:
+        return True
+    else:
+        return False
+    
+
+
 def check_block_user(chatId:int)-> bool:
     db = next(get_db())
     

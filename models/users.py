@@ -19,6 +19,7 @@ class UserUpdate(BaseModel):
     name:str=''
     isBadWord:int = 0
     isBlock:bool=False
+    numberRequestsUnblock:int =0
     
     class Config:
         from_attributes=True

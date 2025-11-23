@@ -86,3 +86,7 @@ User messages: {full_text}
         PROJECT_TEMP.pop(chatId, None)
 
     return result
+
+
+
+    

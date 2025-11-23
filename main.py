@@ -4,7 +4,7 @@ import re
 from Buttons.buttons_for_Admin import all_button_for_Admin, button_for_unblock_requestsUser
 from dependense.const_attributes import text_information,text_ReadMe,list_word_friend,howAreyou,list_badword,work_list,random_text
 from dependense.call_admin import meessage_checkAdmin, message_unBlockForAdmin, message_Admin
-from dependense.config import check_block_user, deleteUser, get_All_user, get_All_user_Block, isBadWordAddDB, isCheckBadWordDB, updateUser
+from dependense.config import check_block_user, deleteUser, get_All_user, get_All_user_Block, isBadWordAddDB, isCheckBadWordDB, isRequestsblock, updateUser
 from models.users import UserCreate, UserUpdate
 from settings import settings
 import random
@@ -41,7 +41,7 @@ def start_bot(message):
                         name= message.from_user.first_name,
                         isBadWord= 0,
                         isBlock=False,
-                            
+                        numberRequestsUnblock=0
                     )
                     db.add(result2)
                     db.commit()
@@ -134,11 +134,20 @@ def message_All_Button(m):
             if text == '/unblock':
                 result_isBlock_user= check_block_user(chat_id)
                 if result_isBlock_user:
-                    
+                    result_number_requests= isRequestsblock(chat_id)
+                    if not result_number_requests:
+                        bot.send_message(chat_id,'شما یه بار درخواست ارسال کرده اید لطفا منتظر نتیجه بمانید!!')
+                        return
+                        
                     result_btn1= message_unBlockForAdmin(userName=str(result.name),chat_id=chat_id)
                     if result_btn1:
-                        button_for_unblock_requestsUser(chat_id)
-                        bot.send_message(chat_id,'درخواست آنبلاک برای ادمین با موفقیت ارسال شد منتظر نتیجه بمانید!!😒')
+                        resultUpdate= updateUser(chat_id=chat_id,data=UserUpdate(numberRequestsUnblock=1))
+                        if resultUpdate:
+                            
+                            button_for_unblock_requestsUser(chat_id)
+                            bot.send_message(chat_id,'درخواست آنبلاک برای ادمین با موفقیت ارسال شد منتظر نتیجه بمانید!!😒')
+                        else:
+                            bot.send_message(chat_id,'خطایی پیش امد لطفا دوباره امتحان کنید!!')
                 else:
                     bot.send_message(chat_id,'شما بلاک نشده اید بنابراین نمیتونید از این دستور استفاده کنید🙂')
             if text == '/information':
@@ -156,10 +165,10 @@ def message_All_Admin(m):
         is_unblock = any(unblock in textAdmin for unblock in ['/unblock','/removeBlock','/userUnBlock',])
         #بعدا چیز های بیشتری باید اضافه بشه برای عملیات های دیگه در سمت ادمین
         if is_unblock:
-            ''
+            
             resulttext = textAdmin.split(':')
             chatId_user= int(resulttext[1])
-            result= updateUser(chat_id=chatId_user,data=UserUpdate(isBadWord=0,isBlock=False))
+            result= updateUser(chat_id=chatId_user,data=UserUpdate(isBadWord=0,isBlock=False,numberRequestsUnblock=0))
             
             if result:
                 bot.send_message(chatId_user,'ادمین بررسی کرد و شمارو از بلاکی در اورد\nتبریک میگم شما دوباره میتونید راجب پروژه و بیزینس با من حرف بزنی🙂‍')
@@ -179,6 +188,11 @@ def control_message_Ai_for_user(message):
         all_button_for_Admin()
         return
 
+    if check_block_user(chatId):
+        
+        bot.send_message(chatId, "⛔ شما بلاک شدید.")
+        return
+    
     # ۱. بررسی توهین
     ai_toxic = detect_toxicity(text_me.lower())
     if ai_toxic.get("toxic") or ai_toxic.get("score", 0) >= 0.65:

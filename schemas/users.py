@@ -11,3 +11,4 @@ class Users(Base):
     name = Column(String,)
     isBadWord= Column(Integer,index=True,nullable=False)
     isBlock = Column(Boolean,nullable=False)
+    numberRequestsUnblock= Column(Integer,nullable=False,index=True)
