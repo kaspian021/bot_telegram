@@ -2,12 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from settings import settings
-from sqlalchemy.pool import StaticPool
+
 
 
 SQLURL= settings.SQLURL
 
-engine = create_engine(SQLURL,connect_args={'check_same_thread':False},poolclass=StaticPool)
+engine = create_engine(SQLURL,echo=True,pool_pre_ping=True)
 
 sessionLocale = sessionmaker(bind=engine,autoflush=False,autocommit=False,)
 
