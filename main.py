@@ -10,7 +10,6 @@ from settings import settings
 import random
 from dependense.orm import get_db
 from schemas import users as table
-from telegram import Update
 from Buttons.buttons_for_User import next_unblock_button, start_Button, unblock_button
 from dependense.ai_groq import classify_intent, detect_toxicity, groq_chat
 from dependense.tools import detect_project_domain, groq_process_project
@@ -46,9 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-# -----------------------------
-#   Webhook Handler (Render)
-# -----------------------------
+
 
 @app.post(webhook_path)
 async def webhook_handler(request: Request):

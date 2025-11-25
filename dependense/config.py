@@ -5,7 +5,6 @@ from dependense.orm import get_db
 from models.users import GetAllUser, GetUser, UserCreate, UserUpdate
 from schemas.users import Users
 from telebot.types import ChatPermissions
-from telegram.error import TelegramError
 from sqlalchemy import Select
 
 
