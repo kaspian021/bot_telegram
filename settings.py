@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     SQLURL:str = os.getenv('SQLURL','')
     CHAT_ID:int = int(os.getenv('CHAT_ID',0))
     GROQ_API_KEY:str = os.getenv("GROQ_API_KEY",'')
+    ENVIRONMENT:str = os.getenv("ENVIRONMENT",'')
+    APP_NAME:str = os.getenv("APP_NAME",'')
     MY_SKILLS:list = list(os.getenv("MY_SKILLS",[]))
     class Config:
         env_file= '.env'

@@ -14,12 +14,90 @@ from telegram import Update
 from Buttons.buttons_for_User import next_unblock_button, start_Button, unblock_button
 from dependense.ai_groq import classify_intent, detect_toxicity, groq_chat
 from dependense.tools import detect_project_domain, groq_process_project
+from contextlib import asynccontextmanager
+from fastapi import FastAPI,Request,HTTPException
+import uvicorn
 
 
 
-
+app = FastAPI(
+    title='Telegram Bot Api',
+    description='ربات دستیار برنامه نویس و همکاری های بیزینسی و پروژه',
+    version='1.0.0',
+)
 bot = TeleBot(token=settings.TOKEN_BOT)
+webhook_path = f"/webhook/{settings.TOKEN_BOT}"
+webhook_url = f"https://{settings.APP_NAME}.herokuapp.com{webhook_path}"
 
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    """مدیریت چرخه عمر برنامه"""
+    #start webhook
+    if settings.ENVIRONMENT == 'production':
+        bot.remove_webhook()
+        bot.set_webhook(url=webhook_url)
+        print(f"✅ Webhook set to: {webhook_url}")
+        
+    yield
+    #shutdown webhook
+    bot.remove_webhook()
+    print('webhook_remove!!')
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.post(webhook_path)
+async def webhook_handler(request:Request):
+    try:
+        json_data = request.json()
+        update_dat = json.loads(json.dumps(json_data))
+        bot.process_new_updates([update_dat])
+        return {'status':'ok'}
+    except Exception as e:
+        print(f"Error webhook_handler: {e}")
+        raise HTTPException(status_code=400,detail=f"Error: {e}")
+    
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {
+        "status": "active", 
+        "message": "🤖 Bot is running with FastAPI!",
+        "framework": "FastAPI"
+    }
+    
+    
+@app.get('/set_webhook')
+async def set_webhook():
+    try:
+        bot.remove_webhook()
+        result= bot.set_webhook(url=webhook_url)
+        return {
+            "status": "success",
+            "webhook_url": webhook_url,
+            "result": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get('/remove_webhook')
+async def remove_webhook():
+    try:
+        result = bot.remove_webhook()
+        return {"status": "success", "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
+@app.get("/health")
+async def health_check():
+    """بررسی سلامت سرویس"""
+    return {
+        "status": "healthy",
+        "timestamp": __import__('datetime').datetime.now().isoformat()
+    }
 
 @bot.message_handler(commands=['start','help'])
 def start_bot(message):
@@ -330,14 +408,10 @@ def response_message_normal(message):
 
 
 if __name__ == "__main__":
-    try:
-        print("🤖 Starting bot...")
-        bot.polling(
-            non_stop=True,
-            interval=1,
-            timeout=20
-        )
-    except KeyboardInterrupt:
-        print("Bot stopped by user")
-    except Exception as e:
-        print(f"Bot error: {e}")
+    
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level='info'
+    )
