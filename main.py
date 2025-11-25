@@ -25,7 +25,8 @@ app = FastAPI(
     version='1.0.0',
 )
 
-bot = TeleBot(token=settings.TOKEN_BOT,threaded=True)
+bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
+
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
@@ -53,10 +54,10 @@ async def webhook_handler(request: Request):
     try:
         json_data = await request.json()
         update_data = types.Update.de_json(json_data)
-        if update_data is not None:
-            await asyncio.to_thread(bot.process_new_updates, [update_data])
-            print('ok')
-            return {"status": "ok"}
+        if update_data:
+            bot.process_new_updates([update_data])
+            print('Update processed')
+        return {"status": "ok"}
     except Exception as e:
         print(f"Error webhook: {e}")
         raise HTTPException(status_code=400, detail=str(e))
