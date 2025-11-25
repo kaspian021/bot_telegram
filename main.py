@@ -397,7 +397,7 @@ def response_message_normal(message):
 
 
 if __name__ == "__main__":
-    Base.metadata.create_all(bind=engine)
+    
     uvicorn.run(
         app,
         host="0.0.0.0",
