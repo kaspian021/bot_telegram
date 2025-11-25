@@ -25,7 +25,7 @@ app = FastAPI(
     version='1.0.0',
 )
 
-bot = TeleBot(token=settings.TOKEN_BOT)
+bot = TeleBot(token=settings.TOKEN_BOT,threaded=True)
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
