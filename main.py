@@ -19,85 +19,74 @@ from fastapi import FastAPI,Request,HTTPException
 import uvicorn
 
 
-
 app = FastAPI(
     title='Telegram Bot Api',
-    description='ربات دستیار برنامه نویس و همکاری های بیزینسی و پروژه',
+    description='ربات دستیار برنامه نویس - نسخه Render',
     version='1.0.0',
 )
+
 bot = TeleBot(token=settings.TOKEN_BOT)
+
+# Webhook URL Render (در محیط Render تنظیم می‌شود)
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
-webhook_url = f"https://{settings.APP_NAME}.herokuapp.com{webhook_path}"
+webhook_url = f"{settings.RENDER_URL}{webhook_path}"
 
 @asynccontextmanager
-async def lifespan(app:FastAPI):
-    """مدیریت چرخه عمر برنامه"""
-    #start webhook
-    if settings.ENVIRONMENT == 'production':
+async def lifespan(app: FastAPI):
+    if settings.ENVIRONMENT == "production":
         bot.remove_webhook()
         bot.set_webhook(url=webhook_url)
         print(f"✅ Webhook set to: {webhook_url}")
-        
-    yield
-    #shutdown webhook
-    bot.remove_webhook()
-    print('webhook_remove!!')
 
+    yield
+
+    bot.remove_webhook()
+    print("Webhook removed.")
 
 app = FastAPI(lifespan=lifespan)
 
 
+# -----------------------------
+#   Webhook Handler (Render)
+# -----------------------------
+
 @app.post(webhook_path)
-async def webhook_handler(request:Request):
+async def webhook_handler(request: Request):
     try:
-        json_data =await request.json()
-        update_dat = json.loads(json.dumps(json_data))
-        bot.process_new_updates([update_dat])
-        return {'status':'ok'}
+        json_data = await request.json()
+        update_data = json.loads(json.dumps(json_data))
+        bot.process_new_updates([update_data])
+        return {"status": "ok"}
     except Exception as e:
-        print(f"Error webhook_handler: {e}")
-        raise HTTPException(status_code=400,detail=f"Error: {e}")
-    
+        print(f"Error webhook: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
     return {
-        "status": "active", 
-        "message": "🤖 Bot is running with FastAPI!",
-        "framework": "FastAPI"
+        "status": "active",
+        "message": "Bot is running on Render 🚀"
     }
-    
-    
-@app.get('/set_webhook')
+
+
+@app.get("/set_webhook")
 async def set_webhook():
     try:
         bot.remove_webhook()
-        result= bot.set_webhook(url=webhook_url)
-        return {
-            "status": "success",
-            "webhook_url": webhook_url,
-            "result": result
-        }
+        result = bot.set_webhook(url=webhook_url)
+        return {"status": "success", "url": webhook_url, "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-@app.get('/remove_webhook')
+
+
+@app.get("/remove_webhook")
 async def remove_webhook():
     try:
         result = bot.remove_webhook()
         return {"status": "success", "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
-@app.get("/health")
-async def health_check():
-    """بررسی سلامت سرویس"""
-    return {
-        "status": "healthy",
-        "timestamp": __import__('datetime').datetime.now().isoformat()
-    }
 
 @bot.message_handler(commands=['start','help'])
 def start_bot(message):
