@@ -55,6 +55,7 @@ async def webhook_handler(request: Request):
         update_data = types.Update.de_json(json_data)
         if update_data is not None:
             await asyncio.to_thread(bot.process_new_updates, [update_data])
+            print('ok')
             return {"status": "ok"}
     except Exception as e:
         print(f"Error webhook: {e}")
