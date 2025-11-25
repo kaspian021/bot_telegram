@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: telegram-bot-fastapi
+    env: python
+    startCommand: uvicorn main:app --host=0.0.0.0 --port=10000
+    plan: free
+    envVars:
+      - key: TOKEN_BOT
+        sync: false
+      - key: ENVIRONMENT
+        value: production
+      - key: RENDER_URL
+        sync: false
+      - key: CHAT_ID
+        sync: false

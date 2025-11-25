@@ -50,7 +50,7 @@ app = FastAPI(lifespan=lifespan)
 @app.post(webhook_path)
 async def webhook_handler(request:Request):
     try:
-        json_data = request.json()
+        json_data =await request.json()
         update_dat = json.loads(json.dumps(json_data))
         bot.process_new_updates([update_dat])
         return {'status':'ok'}
