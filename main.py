@@ -1,5 +1,5 @@
 import json
-from telebot import TeleBot,apihelper
+from telebot import TeleBot,apihelper,types
 import re
 from Buttons.buttons_for_Admin import all_button_for_Admin, button_for_unblock_requestsUser
 from dependense.const_attributes import text_information,text_ReadMe,list_word_friend,howAreyou,list_badword,work_list,random_text
@@ -51,9 +51,10 @@ app = FastAPI(lifespan=lifespan)
 async def webhook_handler(request: Request):
     try:
         json_data = await request.json()
-        update_data = json.loads(json.dumps(json_data))
-        bot.process_new_updates([update_data])
-        return {"status": "ok"}
+        update_data = types.Update.de_json(json_data)
+        if update_data is not None:
+            bot.process_new_updates([update_data])
+            return {"status": "ok"}
     except Exception as e:
         print(f"Error webhook: {e}")
         raise HTTPException(status_code=400, detail=str(e))
