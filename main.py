@@ -18,11 +18,7 @@ import uvicorn
 from database.database import Base,engine
 
 
-app = FastAPI(
-    title='Telegram Bot Api',
-    description='ربات دستیار برنامه نویس - نسخه Render',
-    version='1.0.0',
-)
+
 
 bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
 
@@ -43,7 +39,15 @@ async def lifespan(app: FastAPI):
     bot.remove_webhook()
     print("Webhook removed.")
 
-app = FastAPI(lifespan=lifespan)
+
+
+app = FastAPI(
+    title='Telegram Bot Api',
+    description='ربات دستیار برنامه نویس - نسخه Render',
+    version='1.0.0',
+    lifespan=lifespan
+)
+
 
 
 
@@ -245,11 +249,16 @@ def message_All_Admin(m):
                 
          
        
-@bot.message_handler(func=lambda m: True)
-def control_message_Ai_for_user(message):
-    chatId = message.chat.id
-    text_me = message.text.strip()
-    
+
+
+
+
+        
+@bot.message_handler(func=lambda m : True)
+def control_message_for_me(text,):
+
+    chatId = text.chat.id
+    text_me = text.text.strip()
     # بررسی اگر پیام از ادمین است
     if meessage_checkAdmin(chatId):
         all_button_for_Admin()
@@ -305,86 +314,61 @@ def control_message_Ai_for_user(message):
             bot.send_message(chatId, "سلام! خوش اومدی 🙂")
         return
 
-    # ۵. fallback برای پیام‌های دیگر
-    response_message_normal(message)
-
-
-
-        
-@bot.message_handler(func=lambda m : True)
-def control_message_for_me(text,):
-
-    text_me = text.text.lower()
-    chatId= text.chat.id
     is_badwordNumber= 0
     is_qustion = any(listqustion in text_me for listqustion in ['؟','?'])
     is_howAreYou = any(listqustion in text_me for listqustion in howAreyou)
     is_work = any(listqustion in text_me for listqustion in work_list)
     is_freinds = any(listqustion in text_me for listqustion in list_word_friend)
     is_badWord = any(listqustion in text_me for listqustion in list_badword)
+
+
+
+    if is_qustion and is_howAreYou and not is_work:
+        bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
     
-    admin_check = meessage_checkAdmin(chatId)
-    if admin_check:
-        all_button_for_Admin()
+    elif is_howAreYou:
+        bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
+    elif is_work:
+        bot.send_message(chatId,text=f"""
+                        پیام شما مهم تشخیص داده شد!!🥹🤍
+                        
+                        در صورت نیاز میتونید با این شماره تماس بگیرید: {settings.PHONE_ME}
+
+                        اگر کار شما خیلی ضروری نیست و عجله ندارید میتونید به این آیدی پیام بدید: {settings.TELEGRAM_ID_ME}
+                        
+                        """)
+        
+    elif is_freinds and not is_badWord:
+        bot.send_message(chatId,"""
+                        ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
+                        
+                        اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
+
+                        ایششششششش😒🙂‍
+                        
+                        
+                        """)
+        
+    elif is_freinds and  is_badWord:
+        bot.send_message(chatId,f"""
+                        ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
+                        
+                        اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
+
+                        حواسم هم هست که بهم فحش دادی ها تو الان {is_badwordNumber} تعداد اخطار داری اگر به 5 برسه بلاکت میکنما 😒
+
+                        ایششششششش😒🙂‍
+                        
+                        
+                        """)
+        
+        
+    elif not is_freinds and is_badWord:
+        if is_badwordNumber>1:
+            bot.send_message(chatId,f"اگر میخوای به فحش دادن من ادامه بدی مجبورم بلاکت کنم\nشما تا الان {is_badwordNumber} اخطار داشته اید\nلطفا دیگه تکرار نکیند!! ")
+        
     else:
-            
-        is_badwordNumber= isCheckBadWordDB(chatId)
-        if is_badWord:
-            is_badwordNumber=isBadWordAddDB(chatId)
-            
-        if is_badwordNumber >=5:
-            unblock_button(chatId)
-            bot.send_message(chatId, "⛔ شما بلاک شدید. پیام شما پردازش نمی‌شود.")
-            
-            # blockUser(bot=bot,user_id=text.from_user.id,chat_id=text.chat.id)
-            # deleteUser(chat_id=text.chat.id)
-        else:
-            if is_qustion and is_howAreYou and not is_work:
-                bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
-            
-            elif is_howAreYou:
-                bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
-            elif is_work:
-                bot.send_message(chatId,text=f"""
-                                پیام شما مهم تشخیص داده شد!!🥹🤍
-                                
-                                در صورت نیاز میتونید با این شماره تماس بگیرید: {settings.PHONE_ME}
-
-                                اگر کار شما خیلی ضروری نیست و عجله ندارید میتونید به این آیدی پیام بدید: {settings.TELEGRAM_ID_ME}
-                                
-                                """)
-                
-            elif is_freinds and not is_badWord:
-                bot.send_message(chatId,"""
-                                ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
-                                
-                                اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
-
-                                ایششششششش😒🙂‍
-                                
-                                
-                                """)
-                
-            elif is_freinds and  is_badWord:
-                bot.send_message(chatId,f"""
-                                ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
-                                
-                                اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
-
-                                حواسم هم هست که بهم فحش دادی ها تو الان {is_badwordNumber} تعداد اخطار داری اگر به 5 برسه بلاکت میکنما 😒
-
-                                ایششششششش😒🙂‍
-                                
-                                
-                                """)
-                
-                
-            elif not is_freinds and is_badWord:
-                if is_badwordNumber>1:
-                    bot.send_message(chatId,f"اگر میخوای به فحش دادن من ادامه بدی مجبورم بلاکت کنم\nشما تا الان {is_badwordNumber} اخطار داشته اید\nلطفا دیگه تکرار نکیند!! ")
-                
-            else:
-                response_message_normal(text)
+        response_message_normal(text)
 
 
 def response_message_normal(message):
