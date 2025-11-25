@@ -1,7 +1,5 @@
-import asyncio
-import json
+
 from telebot import TeleBot,apihelper,types
-import re
 from Buttons.buttons_for_Admin import all_button_for_Admin, button_for_unblock_requestsUser
 from dependense.const_attributes import text_information,text_ReadMe,list_word_friend,howAreyou,list_badword,work_list,random_text
 from dependense.call_admin import meessage_checkAdmin, message_unBlockForAdmin, message_Admin
@@ -17,6 +15,7 @@ from dependense.tools import detect_project_domain, groq_process_project
 from contextlib import asynccontextmanager
 from fastapi import FastAPI,Request,HTTPException
 import uvicorn
+from database.database import Base,engine
 
 
 app = FastAPI(
@@ -398,7 +397,7 @@ def response_message_normal(message):
 
 
 if __name__ == "__main__":
-    
+    Base.metadata.create_all(bind=engine)
     uvicorn.run(
         app,
         host="0.0.0.0",
