@@ -28,6 +28,7 @@ pydantic==2.12.4
 pydantic-settings==2.12.0
 pydantic_core==2.41.5
 Pygments==2.19.2
+psycopg2==2.9.11
 pyTelegramBotAPI==4.29.1
 python-dotenv==1.2.1
 python-multipart==0.0.20
