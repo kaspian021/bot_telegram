@@ -1,5 +1,5 @@
 from sqlalchemy import Column
-from sqlalchemy import String,Integer,Boolean
+from sqlalchemy import String,Integer,Boolean,BigInteger
 from database.database import Base
 
 class Users(Base):
@@ -7,8 +7,8 @@ class Users(Base):
     
     
     id = Column(Integer,index=True,primary_key=True)
-    chatid= Column(Integer,nullable=False,unique=True)
-    name = Column(String,)
-    isBadWord= Column(Integer,index=True,nullable=False)
+    chatid= Column(BigInteger,nullable=False,unique=True)
+    name = Column(String(255))
+    isBadWord= Column(Integer,index=True,nullable=False,default=0)
     isBlock = Column(Boolean,nullable=False)
-    numberRequestsUnblock= Column(Integer,nullable=False,index=True)
+    numberRequestsUnblock= Column(Integer,nullable=False,index=True,default=0)
