@@ -1,8 +1,8 @@
-"""start postgresql tabel user
+"""edit supabse
 
-Revision ID: 9206a1b1ce62
+Revision ID: c3dc3eda22f1
 Revises: 
-Create Date: 2025-11-25 16:04:29.833444
+Create Date: 2025-11-25 18:40:24.631312
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9206a1b1ce62'
+revision: str = 'c3dc3eda22f1'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('chatid', sa.BigInteger(), nullable=False),
-    sa.Column('name', sa.String(), nullable=True),
+    sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('isBadWord', sa.Integer(), nullable=False),
     sa.Column('isBlock', sa.Boolean(), nullable=False),
     sa.Column('numberRequestsUnblock', sa.Integer(), nullable=False),

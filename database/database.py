@@ -7,7 +7,7 @@ from settings import settings
 
 SQLURL= settings.SQLURL
 
-engine = create_engine(SQLURL,echo=True,pool_pre_ping=True)
+engine = create_engine(SQLURL,echo=True,future=True)
 
 sessionLocale = sessionmaker(bind=engine,autoflush=False,autocommit=False,)
 
