@@ -1,3 +1,4 @@
+import asyncio
 import json
 from telebot import TeleBot,apihelper,types
 import re
@@ -53,7 +54,7 @@ async def webhook_handler(request: Request):
         json_data = await request.json()
         update_data = types.Update.de_json(json_data)
         if update_data is not None:
-            bot.process_new_updates([update_data])
+            await asyncio.to_thread(bot.process_new_updates, [update_data])
             return {"status": "ok"}
     except Exception as e:
         print(f"Error webhook: {e}")
