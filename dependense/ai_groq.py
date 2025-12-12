@@ -16,7 +16,7 @@ DEFAULT_MODEL = "moonshotai/kimi-k2-instruct-0905"  # یا مدل دلخواهی
 
 
 
-async def groq_chat(messages, model=DEFAULT_MODEL, max_tokens=512, temperature=0.0):
+def groq_chat(messages, model=DEFAULT_MODEL, max_tokens=512, temperature=0.0):
     """
     Wrapper ساده برای chat completion
     messages: list of {"role": "user"/"system"/"assistant", "content": "..." }
@@ -35,7 +35,7 @@ async def groq_chat(messages, model=DEFAULT_MODEL, max_tokens=512, temperature=0
         logging.exception("Groq request failed")
         return None
 
-async def classify_intent(text: str):
+def classify_intent(text: str):
     try:
         resp = client.chat.completions.create(
             model=DEFAULT_MODEL,
@@ -65,7 +65,7 @@ Output JSON only:
         return {"intent": "other", "confidence": 0.0, "error": str(err)}
 
 
-async def detect_toxicity(text: str):
+def detect_toxicity(text: str):
     try:
         resp = client.chat.completions.create(
             model=DEFAULT_MODEL,

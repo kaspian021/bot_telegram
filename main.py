@@ -1,5 +1,4 @@
 
-import asyncio
 from telebot import TeleBot,apihelper,types
 from Buttons.buttons_for_Admin import all_button_for_Admin, button_for_unblock_requestsUser
 from dependense.const_attributes import text_information,text_ReadMe,list_word_friend,howAreyou,list_badword,work_list,random_text
@@ -21,7 +20,7 @@ from database.database import Base,engine
 
 
 
-bot = TeleBot(token=settings.TOKEN_BOT, threaded=True)
+bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
 
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
@@ -254,85 +253,131 @@ def message_All_Admin(m):
 
 
 
+        
+@bot.message_handler(func=lambda m : True)
+def control_message_for_me(text,):
 
-async def process_message(text_obj):
-    chatId = text_obj.chat.id
-    text_me = text_obj.text.strip()
-
-    # اگر پیام از ادمین است
+    chatId = text.chat.id
+    text_me = text.text.strip()
+    # بررسی اگر پیام از ادمین است
     if meessage_checkAdmin(chatId):
         all_button_for_Admin()
         return
 
-    # بررسی بلاک بودن
     if check_block_user(chatId):
+        
         bot.send_message(chatId, "⛔ شما بلاک شدید.")
         return
-
-    # ---------------------------
-    # 1️⃣ بررسی توهین
-    ai_toxic = await detect_toxicity(text_me.lower())
+    
+    # ۱. بررسی توهین
+    ai_toxic = detect_toxicity(text_me.lower())
     if ai_toxic.get("toxic") or ai_toxic.get("score", 0) >= 0.65:
-        
-        isbad = isBadWordAddDB(chatId)
-        bot.send_message(chatId, f"⚠️ پیام نامناسب شناسایی شد. این {isbad}‌مین اخطار شماست.")
-        if isbad >= 5:
+        is_badwordNumber = isBadWordAddDB(chatId)
+        bot.send_message(chatId, f"⚠️ پیام نامناسب شناسایی شد. این {is_badwordNumber}‌مین اخطار شماست.")
+        if is_badwordNumber >= 5:
             unblock_button(chatId)
             bot.send_message(chatId, "⛔ شما بلاک شدید.")
         return
 
-    # ---------------------------
-    # 2️⃣ تشخیص intent
-    ai_intent = await classify_intent(text_me.lower())
+    # ۲. تشخیص intent
+    ai_intent = classify_intent(text_me.lower())
     intent = ai_intent.get("intent")
     confidence = ai_intent.get("confidence", 0)
 
+    # ۳. اگر پیام مرتبط با پروژه یا همکاری است
     if intent in ["project", "contact"] and confidence >= 0.55:
-        project_result = await groq_process_project(chatId, text_me)
+        project_result = groq_process_project(chatId, text_me)
+
+        status = project_result.get("status")
         msg = project_result.get("message", "")
-        if project_result.get("status") == "complete":
+
+        if status == "complete":
+            # ارسال به مدیر
             bot.send_message(settings.CHAT_ID, msg)
             bot.send_message(chatId, "✅ پروژه شما ثبت و برای بررسی به مدیر ارسال شد. ممنون از همکاری شما!")
-        else:
+        elif status == "incomplete":
+            # پیام دوستانه به کاربر بدون ذکر پارامترها
+            bot.send_message(chatId, msg)
+        elif status == "not_my_domain":
             bot.send_message(chatId, msg)
         return
 
-    # ---------------------------
-    # 3️⃣ احوالپرسی یا گفتگو دوستانه
+    # ۴. احوالپرسی یا گفتگو دوستانه
     if intent in ["greeting", "spam_or_joke"] and confidence >= 0.6:
-        response = await groq_chat([
+        response = groq_chat([
             {"role": "system", "content": "You are a friendly bot that talks naturally but focuses on software/business projects."},
             {"role": "user", "content": text_me}
-        ], max_tokens=128)
-        bot.send_message(chatId, response or "سلام! خوش اومدی 🙂")
+        ])
+        if response:
+            bot.send_message(chatId, response)
+        else:
+            bot.send_message(chatId, "سلام! خوش اومدی 🙂")
         return
 
-    # ---------------------------
-    # پیام‌های معمولی / قواعد شخصی
-    await handle_custom_responses(chatId, text_me)
+    is_badwordNumber= 0
+    is_qustion = any(listqustion in text_me for listqustion in ['؟','?'])
+    is_howAreYou = any(listqustion in text_me for listqustion in howAreyou)
+    is_work = any(listqustion in text_me for listqustion in work_list)
+    is_freinds = any(listqustion in text_me for listqustion in list_word_friend)
+    is_badWord = any(listqustion in text_me for listqustion in list_badword)
 
 
-async def handle_custom_responses(chatId, text_me):
-    # نمونه قوانین شخصی و پاسخ سریع
-    is_work = any(word in text_me for word in ["پروژه", "کار", "task"])
-    is_freinds = any(word in text_me for word in ["دوست", "رفیق"])
-    is_badWord = any(word in text_me for word in ["فحش", "لعنت"])
+
+    if is_qustion and is_howAreYou and not is_work:
+        bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
     
-    if is_work:
-        bot.send_message(chatId, f"پیام شما مهم تشخیص داده شد!!\nدر صورت نیاز میتونید با این شماره تماس بگیرید: {settings.PHONE_ME}")
+    elif is_howAreYou:
+        bot.send_message(chatId,'!!لطفا احوال پرسی رو بزار کنار و فقط راجب بیزینس با من حرف بزن')
+    elif is_work:
+        bot.send_message(chatId,text=f"""
+                        پیام شما مهم تشخیص داده شد!!🥹🤍
+                        
+                        در صورت نیاز میتونید با این شماره تماس بگیرید: {settings.PHONE_ME}
+
+                        اگر کار شما خیلی ضروری نیست و عجله ندارید میتونید به این آیدی پیام بدید: {settings.TELEGRAM_ID_ME}
+                        
+                        """)
+        
     elif is_freinds and not is_badWord:
-        bot.send_message(chatId, "لطفا فقط از بیزینس صحبت کن!!")
-    elif is_badWord:
-        bot.send_message(chatId, "⚠️ لطفا از کلمات بد استفاده نکنید!")
+        bot.send_message(chatId,"""
+                        ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
+                        
+                        اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
+
+                        ایششششششش😒🙂‍
+                        
+                        
+                        """)
+        
+    elif is_freinds and  is_badWord:
+        bot.send_message(chatId,f"""
+                        ببین اگه دوست من هستی و میخوای منو خوشحال کنی لطفا فقط از بیزینس صحبت کن!!
+                        
+                        اگر هم دوست نداری راجب بیزینس باهام حرف بزنی پس بهتره بری سراغ ربات های دیگه
+
+                        حواسم هم هست که بهم فحش دادی ها تو الان {is_badwordNumber} تعداد اخطار داری اگر به 5 برسه بلاکت میکنما 😒
+
+                        ایششششششش😒🙂‍
+                        
+                        
+                        """)
+        
+        
+    elif not is_freinds and is_badWord:
+        if is_badwordNumber>1:
+            bot.send_message(chatId,f"اگر میخوای به فحش دادن من ادامه بدی مجبورم بلاکت کنم\nشما تا الان {is_badwordNumber} اخطار داشته اید\nلطفا دیگه تکرار نکیند!! ")
+        
     else:
-        bot.send_message(chatId, random.choice(["پیام دریافت شد 🙂", "در حال بررسی پیام شما...", "ممنون! پیام شما ثبت شد."]))
+        response_message_normal(text)
 
 
-# ---------------------------
-# Wrapper برای TeleBot (sync -> async)
-@bot.message_handler(func=lambda m: True)
-def control_message_for_me_wrapper(message):
-    asyncio.run(process_message(message))
+def response_message_normal(message):
+
+    
+    selected_response = random.choice(random_text)
+    
+    bot.send_message(message.chat.id,selected_response)
+    
 
 
 if __name__ == "__main__":
