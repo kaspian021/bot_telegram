@@ -20,7 +20,7 @@ from database.database import Base,engine
 
 
 
-bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
+bot = TeleBot(token=settings.TOKEN_BOT, threaded=True)
 
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
@@ -255,7 +255,7 @@ def message_All_Admin(m):
 
         
 @bot.message_handler(func=lambda m : True)
-def control_message_for_me(text,):
+async def control_message_for_me(text,):
 
     chatId = text.chat.id
     text_me = text.text.strip()
@@ -270,7 +270,7 @@ def control_message_for_me(text,):
         return
     
     # ۱. بررسی توهین
-    ai_toxic = detect_toxicity(text_me.lower())
+    ai_toxic =await detect_toxicity(text_me.lower())
     if ai_toxic.get("toxic") or ai_toxic.get("score", 0) >= 0.65:
         is_badwordNumber = isBadWordAddDB(chatId)
         bot.send_message(chatId, f"⚠️ پیام نامناسب شناسایی شد. این {is_badwordNumber}‌مین اخطار شماست.")
