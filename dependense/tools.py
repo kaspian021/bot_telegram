@@ -42,7 +42,7 @@ def extract_deadline(text):
     return None
 PROJECT_TEMP = {}
 
-def groq_process_project(chatId, text):
+async def groq_process_project(chatId, text):
     """
     پردازش پروژه با کمک AI:
     - تشخیص اینکه آیا توضیح پروژه کامل است یا نه
