@@ -65,7 +65,7 @@ Output JSON only:
         return {"intent": "other", "confidence": 0.0, "error": str(err)}
 
 
-async def detect_toxicity(text: str):
+def detect_toxicity(text: str):
     try:
         resp = client.chat.completions.create(
             model=DEFAULT_MODEL,

@@ -255,7 +255,7 @@ def message_All_Admin(m):
 
         
 @bot.message_handler(func=lambda m : True)
-async def control_message_for_me(text,):
+def control_message_for_me(text,):
 
     chatId = text.chat.id
     text_me = text.text.strip()
@@ -270,7 +270,7 @@ async def control_message_for_me(text,):
         return
     
     # ۱. بررسی توهین
-    ai_toxic =await detect_toxicity(text_me.lower())
+    ai_toxic = detect_toxicity(text_me.lower())
     if ai_toxic.get("toxic") or ai_toxic.get("score", 0) >= 0.65:
         is_badwordNumber = isBadWordAddDB(chatId)
         bot.send_message(chatId, f"⚠️ پیام نامناسب شناسایی شد. این {is_badwordNumber}‌مین اخطار شماست.")
