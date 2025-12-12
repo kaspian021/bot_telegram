@@ -25,7 +25,7 @@ bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
-webhook_url = f"{settings.RENDER_URL}{webhook_path}"
+webhook_url = f"{settings.SERVER_URL}{webhook_path}"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

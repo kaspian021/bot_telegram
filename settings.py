@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     CHAT_ID:int = int(os.getenv('CHAT_ID',0))
     GROQ_API_KEY:str = os.getenv("GROQ_API_KEY",'')
     ENVIRONMENT:str = os.getenv("ENVIRONMENT",'')
-    RENDER_URL:str = os.getenv("RENDER_URL",'')
+    SERVER_URL:str = os.getenv("SERVER_URL",'')
     APP_NAME:str = os.getenv("APP_NAME",'')
     MY_SKILLS:list = list(os.getenv("MY_SKILLS",[]))
     class Config:
