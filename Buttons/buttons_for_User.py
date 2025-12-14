@@ -9,7 +9,7 @@ keyboard= types.ReplyKeyboardMarkup(resize_keyboard=True,row_width=2)
 
 def unblock_button(chat_id:int):
     bot = get_bot()
-    updateUser(chat_id=chat_id,data=UserUpdate(isBlock=True))
+    
     btnUnblock= types.KeyboardButton('/unblock')
     keyboard.add(btnUnblock)
     bot.send_message(chat_id,'شما مجبورید ریکوست برای انبلاک شدن بفرستین!!',reply_markup=keyboard)

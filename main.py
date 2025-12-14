@@ -210,6 +210,7 @@ def control_message_for_me(message):
             warnings = isBadWordAddDB(chatId)
             bot.send_message(chatId,f"⚠️ پیام نامناسب شناسایی شد. این {warnings}‌مین اخطار شماست.")
             if warnings>=5:
+                updateUser(chat_id=chatId,data=UserUpdate(isBlock=True))
                 unblock_button(chatId)
                 bot.send_message(chatId,"⛔ شما بلاک شدید.")
             return
