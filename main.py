@@ -248,7 +248,7 @@ def control_message_for_me(message):
         # ---------------- پاسخ تصادفی ----------------
         bot.send_message(chatId, random.choice(random_text))
 
-    asyncio.run(process_message())
+    asyncio.create_task(process_message())
 
 
 
