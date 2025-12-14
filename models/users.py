@@ -16,10 +16,11 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    name:str=''
-    isBadWord:int = 0
-    isBlock:bool=False
-    numberRequestsUnblock:int =0
+    name: Optional[str] = None
+    isBadWord: Optional[int] = None
+    isBlock: Optional[bool] = None
+    numberRequestsUnblock: Optional[int] = None
+
     
     class Config:
         from_attributes=True

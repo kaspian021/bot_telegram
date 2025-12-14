@@ -86,23 +86,23 @@ def deleteUser(chat_id:int,):
         db.delete(result)
     
 
-def updateUser(data:UserUpdate,chat_id:int)->bool:
+def updateUser(data: UserUpdate, chat_id: int) -> bool:
     try:
         with get_db() as db:
-            result = db.query(Users).filter(Users.chatid==chat_id).first()
-
-            if result:
-                itemData= data.model_dump(exclude_unset=True)
-                for key,value in itemData.items():
-                    setattr(result,key,value)
-                db.refresh(result)
-                return True
-            else:
+            result = db.query(Users).filter(Users.chatid == chat_id).first()
+            if not result:
                 return False
-        
+
+            # استفاده مستقیم از __dict__ برای اطمینان
+            for key, value in data.model_dump(exclude_unset=True).items():
+                setattr(result, key, value)
+
+            db.refresh(result)
+            return True
     except Exception as e:
         print(f'Error UpdateUser: {e}')
         return False
+
         
         
 def get_All_user()->GetAllUser:
