@@ -86,22 +86,27 @@ def deleteUser(chat_id:int,):
         db.delete(result)
     
 
-def updateUser(data: UserUpdate, chat_id: int) -> bool:
+def updateUser(chat_id:int, data:UserUpdate) -> bool:
     try:
         with get_db() as db:
-            result = db.query(Users).filter(Users.chatid == chat_id).first()
-            if not result:
+            user = db.query(Users).filter(Users.chatid==chat_id).first()
+            if not user:
                 return False
 
-            # استفاده مستقیم از __dict__ برای اطمینان
-            for key, value in data.model_dump(exclude_unset=True).items():
-                setattr(result, key, value)
+            # چاپ مقادیر قبل و بعد برای دیباگ
+            print(f"[UpdateUser] قبل: {user.isBlock}")
 
-            db.refresh(result)
+            for key, value in data.model_dump(exclude_unset=True).items():
+                setattr(user, key, value)
+
+            db.add(user)  # اطمینان از ثبت تغییرات
+            print(f"[UpdateUser] بعد: {user.isBlock}")
+
             return True
     except Exception as e:
-        print(f'Error UpdateUser: {e}')
+        print(f"Error UpdateUser: {e}")
         return False
+
 
         
         
