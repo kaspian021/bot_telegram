@@ -9,43 +9,41 @@ from sqlalchemy import Select
 
 
 def isBadWordAddDB(id:int)->int:
-    db= next(get_db())
-    
-    result= db.query(Users).filter(Users.chatid==id).first()
-    
-    if result:
+    with get_db() as db:
         
-        db.query(Users).filter(Users.chatid==id).update({Users.isBadWord:Users.isBadWord+1})
-        db.commit()
-        updating_user= db.query(Users.isBadWord).filter(Users.chatid==id).scalar()
+        result= db.query(Users).filter(Users.chatid==id).first()
         
-        
-        return int(updating_user)
-    else:
-        new_user = Users(chatid=id,isBadWord=1,isBlock=False,numberRequestsUnblock=0)
-        
-        db.add(new_user)
-        db.commit()
-        return 1
+        if result:
+            
+            db.query(Users).filter(Users.chatid==id).update({Users.isBadWord:Users.isBadWord+1})
+            updating_user= db.query(Users.isBadWord).filter(Users.chatid==id).scalar()
+            
+            
+            return int(updating_user)
+        else:
+            new_user = Users(chatid=id,isBadWord=1,isBlock=False,numberRequestsUnblock=0)
+            
+            db.add(new_user)
+            
+            return 1
     
 
 def isCheckBadWordDB(id:int):
-    db = next(get_db())
-    result = db.query(Users).filter(Users.chatid==id).first()
-    if result:
-        resultBadWord= db.query(Users.isBadWord).filter(Users.chatid==id).scalar()
-    
-        if resultBadWord >0:
-            return int(resultBadWord)
-    
-        else:
-            return 0
-    else:
-        new_user = Users(chatid=id,isBadWord=0,isBlock=False,numberRequestsUnblock=0)
+    with get_db() as db:
+        result = db.query(Users).filter(Users.chatid==id).first()
+        if result:
+            resultBadWord= db.query(Users.isBadWord).filter(Users.chatid==id).scalar()
         
-        db.add(new_user)
-        db.commit()
-        return 1
+            if resultBadWord >0:
+                return int(resultBadWord)
+        
+            else:
+                return 0
+        else:
+            new_user = Users(chatid=id,isBadWord=0,isBlock=False,numberRequestsUnblock=0)
+            
+            db.add(new_user)
+            return 1
     
 
 # def blockUser(bot:TeleBot,user_id:int,chat_id:int,)-> bool:
@@ -82,28 +80,26 @@ def isCheckBadWordDB(id:int):
 
 
 def deleteUser(chat_id:int,):
-    db = next(get_db())
-    result = db.query(Users).filter(Users.chatid==chat_id).first()
+    with get_db() as db:
+        result = db.query(Users).filter(Users.chatid==chat_id).first()
     
-    db.delete(result)
-    db.commit()
+        db.delete(result)
     
 
 def updateUser(data:UserUpdate,chat_id:int)->bool:
     try:
-        db = next(get_db())
-        result = db.query(Users).filter(Users.chatid==chat_id).first()
+        with get_db() as db:
+            result = db.query(Users).filter(Users.chatid==chat_id).first()
 
-        if result:
-            itemData= data.model_dump(exclude_unset=True)
-            for key,value in itemData.items():
-                setattr(result,key,value)
-            db.commit()
-            db.refresh(result)
-            return True
-        else:
-            return False
-    
+            if result:
+                itemData= data.model_dump(exclude_unset=True)
+                for key,value in itemData.items():
+                    setattr(result,key,value)
+                db.refresh(result)
+                return True
+            else:
+                return False
+        
     except Exception as e:
         print(f'Error UpdateUser: {e}')
         return False
@@ -111,24 +107,24 @@ def updateUser(data:UserUpdate,chat_id:int)->bool:
         
 def get_All_user()->GetAllUser:
     try:
-        db = next(get_db())
-        select = Select(Users)
-        result = db.scalars(select).all()
-        if result:
-            first_item = result[0]
-            allData = []
-            for item in result:
+        with get_db() as db:
+            select = Select(Users)
+            result = db.scalars(select).all()
+            if result:
+                first_item = result[0]
+                allData = []
+                for item in result:
+                    
+                    allData.append(GetUser(
+                        chatId=int(item.chatid), 
+                        name=str(item.name),      
+                        isBadWord=int(item.isBadWord),  
+                        isBlock=bool(item.isBlock)  
+                    ))
                 
-                allData.append(GetUser(
-                    chatId=int(item.chatid), 
-                    name=str(item.name),      
-                    isBadWord=int(item.isBadWord),  
-                    isBlock=bool(item.isBlock)  
-                ))
-            
-            return GetAllUser(all_user=allData)
-        else:
-            return GetAllUser(all_user=[])
+                return GetAllUser(all_user=allData)
+            else:
+                return GetAllUser(all_user=[])
     
     except Exception as e:
         print(f'Error get_All_user: {e}')
@@ -139,21 +135,21 @@ def get_All_user()->GetAllUser:
         
 def get_All_user_Block():
     try:
-        db = next(get_db())
+        with get_db() as db:
         
-        select = Select(Users).where(Users.isBlock==True)
-        result = db.scalars(select).all()
-        
-        allData = []
-        for item in result:
-            allData.append(GetUser(
-                chatId=int(item.chatid),  
-                    name=str(item.name),      
-                    isBadWord=int(item.isBadWord),  
-                    isBlock=bool(item.isBlock) 
-            ))
-        
-        return GetAllUser(all_user=allData)
+            select = Select(Users).where(Users.isBlock==True)
+            result = db.scalars(select).all()
+            
+            allData = []
+            for item in result:
+                allData.append(GetUser(
+                    chatId=int(item.chatid),  
+                        name=str(item.name),      
+                        isBadWord=int(item.isBadWord),  
+                        isBlock=bool(item.isBlock) 
+                ))
+            
+            return GetAllUser(all_user=allData)
     
     except Exception as e:
         print(f'Error get_All_user_Block: {e}')
@@ -162,23 +158,23 @@ def get_All_user_Block():
  
 
 def isRequestsblock(chatId:int)->bool:       
-    db = next(get_db())
+    with get_db() as db:
     
-    result = db.query(Users.numberRequestsUnblock).filter(Users.chatid==chatId).scalar()
-    
-    if result==0:
-        return True
-    else:
-        return False
+        result = db.query(Users.numberRequestsUnblock).filter(Users.chatid==chatId).scalar()
+        
+        if result==0:
+            return True
+        else:
+            return False
     
 
 
 def check_block_user(chatId:int)-> bool:
-    db = next(get_db())
+    with get_db() as db:
     
-    result = db.query(Users.isBlock).filter(Users.chatid==chatId).scalar()
-    
-    if result:
-        return True
-    else:
-        return False
+        result = db.query(Users.isBlock).filter(Users.chatid==chatId).scalar()
+        
+        if result:
+            return True
+        else:
+            return False
