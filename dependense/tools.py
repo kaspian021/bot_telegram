@@ -32,9 +32,9 @@ def extract_deadline(text):
     match = re.search(r'(\d+\s*(روز|هفته|ماه))', text)
     return match.group(1) if match else None
 
-async def groq_process_project(chatId, text,message):
+async def groq_process_project(chatId, text, user_message):
     """
-    پردازش پروژه به صورت async
+    پردازش پروژه به صورت async:
     - پیام‌ها رو ذخیره می‌کنه
     - با context قبلی پاسخ میده
     - اگر اطلاعات ناقص باشه، از کاربر می‌پرسه
@@ -70,22 +70,25 @@ User messages: {full_text}
     except:
         result = {
             "status": "incomplete",
-            "message_to_user": "پیام شما دریافت شد. لطفاً اطلاعات بیشتری بدهید (بودجه، نوع پروژه، زمان تحویل).",
-            "project_info": {},
-            "missing_fields": ["project_type","budget","deadline","description"]
+            "message_to_user": "پیام شما دریافت شد. لطفاً اطلاعات بیشتری بدهید (بودجه، نوع پروژه، زمان تحویل، توضیحات).",
+            "project_info": {"type":"","budget":"","deadline":"","description":""},
+            "missing_fields": ["type","budget","deadline","description"]
         }
 
-    if result.get("status") == "complete":
-        # جمع‌آوری اطلاعات کاربر
-          # باید dict شامل name, username, chatId و … باشه
-        project_info = result.get("project_info", {})
+    # اطمینان از کامل بودن project_info
+    project_info = result.get("project_info", {})
+    for field in ["type","budget","deadline","description"]:
+        project_info.setdefault(field, "")
+    result["project_info"] = project_info
 
+    if result.get("status") == "complete":
         # پیام برای ادمین شامل کاربر + پروژه
         result["message_to_admin"] = f"""
 📌 پروژه جدید ثبت شد:
 
-👤 کاربر: {message}
+👤 کاربر: {user_message}
 🆔 ChatID: {chatId}
+👤 Username: @{getattr(user_message.from_user,'username','ندارد')}
 
 💼 اطلاعات پروژه:
 - نوع پروژه: {project_info.get('type')}

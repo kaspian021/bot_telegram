@@ -219,16 +219,24 @@ def control_message_for_me(message):
         intent = ai_intent.get("intent")
         confidence = ai_intent.get("confidence",0)
 
+        # ---------------- پروژه یا تماس ----------------
         if intent in ["project","contact"] and confidence>=0.55:
-            project_result = await groq_process_project(chatId,text_me,message.from_user.first_name)
-            status, msg = project_result.get("status"), project_result.get("message","")
-            if status=="complete":
-                bot.send_message(settings.CHAT_ID,msg)
-                bot.send_message(chatId,"✅ پروژه شما ثبت شد و برای مدیر ارسال شد.")
-            else:
-                bot.send_message(chatId,msg)
+            project_result = await groq_process_project(chatId, text_me, message)
+            status = project_result.get("status")
+            msg_to_user = project_result.get("message_to_user","")
+            msg_to_admin = project_result.get("message_to_admin","")
+
+            # پاسخ به کاربر
+            if msg_to_user:
+                bot.send_message(chatId, msg_to_user)
+
+            # اگر کامل شد، پیام به ادمین
+            if status=="complete" and msg_to_admin:
+                bot.send_message(settings.CHAT_ID, msg_to_admin)
+
             return
 
+        # ---------------- پاسخ‌های دوستانه ----------------
         if intent in ["greeting","spam_or_joke"] and confidence>=0.6:
             response = await AI.groq_chat([
                 {"role":"system","content":"You are a friendly bot..."},
@@ -237,9 +245,12 @@ def control_message_for_me(message):
             bot.send_message(chatId,response or "سلام! خوش اومدی 🙂")
             return
 
+        # ---------------- پاسخ تصادفی ----------------
         bot.send_message(chatId, random.choice(random_text))
 
     asyncio.run(process_message())
+
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
