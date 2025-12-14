@@ -220,7 +220,7 @@ def control_message_for_me(message):
         confidence = ai_intent.get("confidence",0)
 
         if intent in ["project","contact"] and confidence>=0.55:
-            project_result = await groq_process_project(chatId,text_me)
+            project_result = await groq_process_project(chatId,text_me,message.from_user.first_name)
             status, msg = project_result.get("status"), project_result.get("message","")
             if status=="complete":
                 bot.send_message(settings.CHAT_ID,msg)

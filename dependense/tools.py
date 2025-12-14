@@ -26,27 +26,37 @@ def detect_project_domain(text):
 
 def extract_budget(text):
     match = re.search(r'(\d{1,3}(?:[\d,]*)\s*(تومان|ت|T))', text)
-    if match:
-        return match.group(1)
-    return None
+    return match.group(1) if match else None
 
 def extract_deadline(text):
     match = re.search(r'(\d+\s*(روز|هفته|ماه))', text)
-    if match:
-        return match.group(1)
-    return None
+    return match.group(1) if match else None
 
-async def groq_process_project(chatId, text):
-    """Async پردازش پروژه"""
+async def groq_process_project(chatId, text,message):
+    """
+    پردازش پروژه به صورت async
+    - پیام‌ها رو ذخیره می‌کنه
+    - با context قبلی پاسخ میده
+    - اگر اطلاعات ناقص باشه، از کاربر می‌پرسه
+    - وقتی کامل شد، info پروژه + user برای ادمین آماده می‌کنه
+    """
     if chatId not in PROJECT_TEMP:
         PROJECT_TEMP[chatId] = {"messages": []}
+    
     PROJECT_TEMP[chatId]["messages"].append(text)
     full_text = " ".join(PROJECT_TEMP[chatId]["messages"])
 
     system_prompt = f"""
-You are a professional assistant for software/business projects. 
-Determine if user's message contains enough detail.
-Allowed domains: {", ".join(settings.MY_SKILLS)}
+You are a professional assistant for software/business projects.
+Check if user provided all required info: 
+1. Project type/domain 
+2. Budget
+3. Deadline/Delivery time
+4. Project description/details
+If any info is missing, ask the user explicitly.
+Use previous messages for context.
+Respond in JSON format only:
+{{"status":"complete/incomplete", "message_to_user":"", "project_info":{{"type":"", "budget":"", "deadline":"", "description":""}}, "missing_fields":[]}}
 User messages: {full_text}
 """
 
@@ -58,9 +68,32 @@ User messages: {full_text}
     try:
         result = json.loads(str(ai_result))
     except:
-        result = {"status": "incomplete", "message": "پیام شما دریافت شد. لطفاً کمی بیشتر توضیح بده."}
+        result = {
+            "status": "incomplete",
+            "message_to_user": "پیام شما دریافت شد. لطفاً اطلاعات بیشتری بدهید (بودجه، نوع پروژه، زمان تحویل).",
+            "project_info": {},
+            "missing_fields": ["project_type","budget","deadline","description"]
+        }
 
     if result.get("status") == "complete":
+        # جمع‌آوری اطلاعات کاربر
+          # باید dict شامل name, username, chatId و … باشه
+        project_info = result.get("project_info", {})
+
+        # پیام برای ادمین شامل کاربر + پروژه
+        result["message_to_admin"] = f"""
+📌 پروژه جدید ثبت شد:
+
+👤 کاربر: {message}
+🆔 ChatID: {chatId}
+
+💼 اطلاعات پروژه:
+- نوع پروژه: {project_info.get('type')}
+- بودجه: {project_info.get('budget')}
+- زمان تحویل: {project_info.get('deadline')}
+- توضیحات: {project_info.get('description')}
+"""
+        # پاک کردن حافظه کاربر برای پروژه بعدی
         PROJECT_TEMP.pop(chatId, None)
 
     return result
