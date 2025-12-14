@@ -73,7 +73,7 @@ async def start_bot(message):
                 else:
                     user = db.query(table.Users).filter(table.Users.chatid==chatId).first()
                     if user:
-                        await bot.send_message(chatId, f"سلام خوش برگشتی به ربات شخصی (Alikaspian)\nاطلاعات شما:\nنام: {message.from_user.first_name}\nتعداد اخطار: {user.isBadWord}")
+                        await bot.send_message(chatId, f"سلام خوش برگشتی به ربات شخصی (Alikaspian)\nاطلاعات شما:\nنام: {message.from_user}\nتعداد اخطار: {user.isBadWord}")
                     else:
                         new_user = table.Users(
                             chatid=chatId,
