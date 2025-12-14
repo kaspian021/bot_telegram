@@ -18,9 +18,9 @@ import uvicorn
 # ----------------- BOT INIT -----------------
 bot = TeleBot(token=settings.TOKEN_BOT, threaded=True)
 ai_client = AIClient()  # ⚡ Instance از AIClient
-
+baseUrlBot = '/botProgrammer'
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
-webhook_url = f"{settings.SERVER_URL}/botProgrammer{webhook_path}"
+webhook_url = f"{settings.SERVER_URL}{baseUrlBot}{webhook_path}"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,7 +39,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-@app.post(webhook_path)
+@app.post(f"{baseUrlBot}{webhook_path}")
 async def webhook_handler(request: Request):
     try:
         json_data = await request.json()
@@ -50,17 +50,17 @@ async def webhook_handler(request: Request):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/botProgrammer")
+@app.get(baseUrlBot)
 async def root():
     return {"status": "active", "message": "Bot is running on Render 🚀"}
 
-@app.get("/set_webhook")
+@app.get(f"{baseUrlBot}/set_webhook")
 async def set_webhook():
     bot.remove_webhook()
     result = bot.set_webhook(url=webhook_url)
     return {"status": "success", "url": webhook_url, "result": result}
 
-@app.get("/remove_webhook")
+@app.get(f"{baseUrlBot}/remove_webhook")
 async def remove_webhook():
     result = bot.remove_webhook()
     return {"status": "success", "result": result}
