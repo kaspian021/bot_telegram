@@ -1,4 +1,5 @@
 import json, re
+import time
 from dependense.ai_groq import AIClient
 from dependense.const_attributes import work_list
 from settings import settings
@@ -32,18 +33,25 @@ def extract_deadline(text):
     match = re.search(r'(\d+\s*(روز|هفته|ماه))', text)
     return match.group(1) if match else None
 
-async def groq_process_project(chatId, text, user_message):
+async def groq_process_project(chatId, text, user_message, ttl=1800):
     """
-    پردازش پروژه به صورت async:
-    - پیام‌ها رو ذخیره می‌کنه
-    - با context قبلی پاسخ میده
-    - اگر اطلاعات ناقص باشه، از کاربر می‌پرسه
-    - وقتی کامل شد، info پروژه + user برای ادمین آماده می‌کنه
+    پردازش پروژه به صورت async با حافظه کوتاه‌مدت 30 دقیقه (1800 ثانیه)
     """
+    now = time.time()
+
+    # پاک کردن پیام‌های قدیمی
+    if chatId in PROJECT_TEMP:
+        if now - PROJECT_TEMP[chatId]["last_update"] > ttl:
+            PROJECT_TEMP.pop(chatId)
+
+    # ایجاد یا بروزرسانی حافظه
     if chatId not in PROJECT_TEMP:
-        PROJECT_TEMP[chatId] = {"messages": []}
-    
+        PROJECT_TEMP[chatId] = {"messages": [], "last_update": now}
+
     PROJECT_TEMP[chatId]["messages"].append(text)
+    PROJECT_TEMP[chatId]["last_update"] = now
+
+    # ترکیب تمام پیام‌ها برای ارسال به AI
     full_text = " ".join(PROJECT_TEMP[chatId]["messages"])
 
     system_prompt = f"""
@@ -57,6 +65,7 @@ If any info is missing, ask the user explicitly.
 Use previous messages for context.
 Respond in JSON format only:
 {{"status":"complete/incomplete", "message_to_user":"", "project_info":{{"type":"", "budget":"", "deadline":"", "description":""}}, "missing_fields":[]}}
+
 User messages: {full_text}
 """
 
@@ -86,7 +95,7 @@ User messages: {full_text}
         result["message_to_admin"] = f"""
 📌 پروژه جدید ثبت شد:
 
-👤 کاربر: {user_message}
+👤 کاربر: {getattr(user_message.from_user,'first_name','کاربر')}
 🆔 ChatID: {chatId}
 👤 Username: @{getattr(user_message.from_user,'username','ندارد')}
 
@@ -96,7 +105,7 @@ User messages: {full_text}
 - زمان تحویل: {project_info.get('deadline')}
 - توضیحات: {project_info.get('description')}
 """
-        # پاک کردن حافظه کاربر برای پروژه بعدی
+        # پاک کردن حافظه کاربر بعد از تکمیل پروژه
         PROJECT_TEMP.pop(chatId, None)
 
     return result
