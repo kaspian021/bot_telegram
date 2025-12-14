@@ -20,12 +20,12 @@ from database.database import Base,engine
 
 
 
-bot = TeleBot(token=settings.TOKEN_BOT, threaded=False)
+bot = TeleBot(token=settings.TOKEN_BOT, threaded=True)
 
 
 # Webhook URL Render (در محیط Render تنظیم می‌شود)
 webhook_path = f"/webhook/{settings.TOKEN_BOT}"
-webhook_url = f"{settings.SERVER_URL}{webhook_path}"
+webhook_url = f"{settings.SERVER_URL}/botProgrammer{webhook_path}"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -43,9 +43,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title='Telegram Bot Api',
-    description='ربات دستیار برنامه نویس - نسخه Render',
+    description='ربات دستیار برنامه نویس',
     version='1.0.0',
-    lifespan=lifespan
+    lifespan=lifespan,
+    
 )
 
 
@@ -66,7 +67,7 @@ async def webhook_handler(request: Request):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/")
+@app.get("/botProgrammer")
 async def root():
     return {
         "status": "active",
