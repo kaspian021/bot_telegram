@@ -73,7 +73,7 @@ async def start_bot(message):
                 else:
                     user = db.query(table.Users).filter(table.Users.chatid==chatId).first()
                     if user:
-                        await bot.send_message(chatId, f"سلام خوش برگشتی به ربات شخصی (Alikaspian)\nاطلاعات شما:\nنام: {message.from_user}\nتعداد اخطار: {user.isBadWord}")
+                        await bot.send_message(chatId, f"سلام خوش برگشتی به ربات شخصی (Alikaspian)\nاطلاعات شما:\nنام: {message.from_user.first_name}\nتعداد اخطار: {user.isBadWord}")
                     else:
                         new_user = table.Users(
                             chatid=chatId,
@@ -84,7 +84,7 @@ async def start_bot(message):
                         )
                         db.add(new_user)
                         db.commit()
-                        await bot.send_message(chatId, f"🙂سلام {message.from_user} عزیز به ربات همکاری و شخصی (Alikaspian) خوش آمدید")
+                        await bot.send_message(chatId, f"🙂سلام {message.from_user.first_name} عزیز به ربات همکاری و شخصی (Alikaspian) خوش آمدید")
                         await start_Button(chatId)
             elif message.text == '/help':
                 await bot.send_message(chatId,'🙂چطور میتونم بهتون کمک کنم؟')
